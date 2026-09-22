@@ -1,0 +1,9 @@
+{
+  "name": "tkj-isp-ai-command-center",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TKJ ISP Command Center with OpenAI AI Assistant for Vercel",
+  "dependencies": {
+    "openai": "latest"
+  }
+}
