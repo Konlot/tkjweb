@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TKJ ISP Command Center</title>
+<style>
+:root{--bg:#07101c;--panel:#0d1829;--panel2:#13233a;--line:#253957;--txt:#eaf2ff;--muted:#9cabc4;--a:#4ca7ff;--good:#43d693;--warn:#ffd166;--bad:#ff7085}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#142746 0,#07101c 45%);color:var(--txt);font:15px system-ui,-apple-system,Segoe UI,Arial}
+header{position:sticky;top:0;z-index:10;background:#07101ceb;backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.wrap{max-width:1150px;margin:auto;padding:16px}.brand{font-size:23px;font-weight:850}.muted{color:var(--muted)}nav{display:flex;gap:7px;overflow:auto;margin-top:13px}nav button{white-space:nowrap}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--txt);padding:9px 12px;border-radius:9px;cursor:pointer}button:hover{filter:brightness(1.15)}button.active,.primary{background:var(--a);color:#06111d;border-color:var(--a);font-weight:750}
+.tab{display:none}.tab.active{display:block}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px}.card{background:linear-gradient(180deg,#0e1a2d,#0b1525);border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:15px}.card h2{margin-top:0}
+input,select,textarea{width:100%;background:#07111e;color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:10px;margin:5px 0 10px;outline:none}textarea{min-height:65px;resize:vertical}.result{background:#07111e;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;line-height:1.6}
+.pill{display:inline-block;background:#172b49;border:1px solid #29486f;border-radius:99px;padding:4px 8px;margin:3px;font-size:12px}.step{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1b2b43}.num{width:27px;height:27px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--a);color:#06111d;font-weight:800}
+.chat{height:54vh;min-height:400px;overflow:auto;background:#07111e;border:1px solid var(--line);border-radius:12px;padding:12px}.msg{max-width:88%;padding:11px 13px;border-radius:13px;white-space:pre-wrap;line-height:1.55;margin:8px 0}.user{margin-left:auto;background:#124e7f}.ai{background:#17253b}.row{display:flex;gap:8px}.row textarea{margin:0;flex:1}.small{font-size:12px}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}.cmd{font:13px ui-monospace,monospace;background:#050b13;padding:10px;border-radius:8px;cursor:pointer;border:1px solid #17263e;white-space:pre-wrap}
+@media(max-width:600px){.brand{font-size:20px}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<div class="brand">🛠️ TKJ ISP Command Center</div>
+<div class="muted">Toolkit teknisi ISP + AI Assistant — FTTH • MikroTik • PPPoE • VLAN • IP • FO</div>
+<nav id="nav">
+<button class="active" data-tab="home">Dashboard</button><button data-tab="ai">🤖 AI Chat</button><button data-tab="subnet">IPv4/Subnet</button><button data-tab="fo">🔦 FO Budget</button><button data-tab="trouble">🔧 Troubleshoot</button><button data-tab="mikrotik">⌨️ MikroTik</button><button data-tab="ref">📚 Referensi</button>
+</nav></div></header>
+
+<main class="wrap">
+<section id="home" class="tab active"><div class="grid">
+<div class="card"><h2>Field workflow</h2><div class="step"><b class="num">1</b><div><b>Physical</b><br><span class="muted">Power → kabel → connector → PON/LOS → optical level</span></div></div><div class="step"><b class="num">2</b><div><b>L2</b><br><span class="muted">Ethernet → MAC → bridge → VLAN → PPPoE</span></div></div><div class="step"><b class="num">3</b><div><b>L3</b><br><span class="muted">IP → gateway → route → NAT → DNS</span></div></div><div class="step"><b class="num">4</b><div><b>Service</b><br><span class="muted">Bandwidth → latency → packet loss → aplikasi</span></div></div></div>
+<div class="card"><h2>AI Assistant</h2><p class="muted">Tanya seperti teknisi lapangan. AI akan memprioritaskan pemeriksaan dari fisik sampai service.</p><button class="primary" onclick="go('ai')">Buka AI Chat →</button><p><span class="pill">FTTH</span><span class="pill">OLT/ONU</span><span class="pill">MikroTik</span><span class="pill">PPPoE</span><span class="pill">VLAN</span><span class="pill">Routing</span></p></div>
+<div class="card"><h2>Checklist pulang</h2><div id="checks"></div><button onclick="resetChecks()">Reset</button></div>
+</div></section>
+
+<section id="ai" class="tab"><div class="card"><h2>🤖 TKJ ISP AI Assistant</h2><p class="muted">Backend memakai OpenAI API. API key disimpan di Vercel Environment Variables, bukan di browser.</p><div id="chat" class="chat"><div class="msg ai">Halo! Beri saya gejala dan hasil pengukuran. Contoh: “ONT LOS merah, power optik -29 dBm, konektor sudah dibersihkan. Apa langkah berikutnya?”</div></div><div class="row" style="margin-top:9px"><textarea id="q" placeholder="Tulis pertanyaan..."></textarea><button class="primary" onclick="send()">Kirim</button></div><div id="aiStatus" class="small muted" style="margin-top:7px">Siap.</div></div></section>
+
+<section id="subnet" class="tab"><div class="card"><h2>🧮 IPv4 Subnet Calculator</h2><input id="cidr" value="192.168.10.0/24"><button class="primary" onclick="subnet()">Hitung</button><div id="subout" class="result"></div></div></section>
+
+<section id="fo" class="tab"><div class="grid"><div class="card"><h2>🔦 Optical Budget</h2><label>Fiber (km)</label><input id="km" type="number" value="5" step=".1"><label>Attenuation (dB/km)</label><input id="att" type="number" value=".35" step=".01"><label>Connector</label><input id="cn" type="number" value="4"><label>Loss/connector (dB)</label><input id="cl" type="number" value=".5" step=".1"><label>Splice</label><input id="sp" type="number" value="6"><label>Loss/splice (dB)</label><input id="sl" type="number" value=".1" step=".01"><label>Margin (dB)</label><input id="mg" type="number" value="3" step=".1"><button class="primary" onclick="fo()">Hitung</button><div id="foout" class="result"></div></div><div class="card"><h2>Catatan</h2><p class="muted">Kalkulator ini adalah estimasi engineering. Verifikasi kondisi nyata dengan optical power meter/OTDR dan spesifikasi link budget perangkat.</p></div></div></section>
+
+<section id="trouble" class="tab"><div class="card"><h2>🔧 Troubleshooting Wizard</h2><select id="sym" onchange="tr()"><option value="los">ONT/ONU LOS</option><option value="pppoe">PPPoE gagal</option><option value="slow">Internet lambat</option><option value="ping">Ping tinggi/packet loss</option><option value="dhcp">Tidak dapat IP</option><option value="wifi">Wi-Fi bermasalah</option></select><div id="trout" class="result"></div></div></section>
+
+<section id="mikrotik" class="tab"><div class="card"><h2>⌨️ MikroTik Pocket Reference</h2><input id="search" placeholder="Cari command..." oninput="renderCmd()"><div id="cmds"></div></div></section>
+
+<section id="ref" class="tab"><div class="grid">
+<div class="card"><h2>🌐 Port</h2><p>DNS — <b>53 UDP/TCP</b></p><p>DHCP — <b>67/68 UDP</b></p><p>HTTP — <b>80 TCP</b></p><p>HTTPS — <b>443 TCP</b></p><p>SSH — <b>22 TCP</b></p><p>Winbox — <b>8291 TCP</b></p><p>NTP — <b>123 UDP</b></p></div>
+<div class="card"><h2>📡 Istilah ISP</h2><p><b>POP</b> — lokasi/titik konsentrasi perangkat jaringan ISP.</p><p><b>OLT</b> — perangkat sisi ISP pada jaringan PON.</p><p><b>ONU/ONT</b> — perangkat sisi pelanggan pada jaringan optik.</p><p><b>PPPoE</b> — mekanisme sesi/autentikasi pelanggan.</p><p><b>VLAN</b> — segmentasi jaringan Layer 2.</p><p><b>FWA</b> — akses broadband melalui radio.</p></div>
+<div class="card"><h2>⚠️ Prinsip aman</h2><p class="muted">AI tidak menggantikan alat ukur. Jangan mengubah konfigurasi produksi sebelum memahami dampaknya dan menyimpan backup konfigurasi.</p></div>
+</div></section>
+</main>
+<script>
+const nav=document.querySelectorAll('#nav button');function go(id){nav.forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.id===id));window.scrollTo(0,0)}nav.forEach(b=>b.onclick=()=>go(b.dataset.tab));
+const checks=['Power perangkat normal','PON/LOS normal','Optical level dicek','Konektor/kabel diperiksa','VLAN/bridge benar','PPPoE/DHCP normal','Gateway bisa diping','DNS bisa resolve','Internet berhasil dites','Dokumentasi/konfigurasi disimpan'];
+function renderChecks(){let s=JSON.parse(localStorage.tkcheck||'[]');document.getElementById('checks').innerHTML=checks.map((x,i)=>`<label style="display:block;padding:8px;border-bottom:1px solid #1b2b43"><input type="checkbox" ${s.includes(i)?'checked':''} onchange="saveCheck()"> ${x}</label>`).join('')}
+function saveCheck(){let a=[];document.querySelectorAll('#checks input').forEach((e,i)=>e.checked&&a.push(i));localStorage.tkcheck=JSON.stringify(a)}function resetChecks(){localStorage.removeItem('tkcheck');renderChecks()}renderChecks();
+
+function ipInt(ip){let p=ip.split('.').map(Number);if(p.length!=4||p.some(x=>x<0||x>255||!Number.isInteger(x)))throw 0;return ((p[0]*256+p[1])*256+p[2])*256+p[3]>>>0}function ip(n){return[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.')}
+function subnet(){try{let [a,b]=cidr.value.trim().split('/'),p=+b,n=ipInt(a);if(p<0||p>32)throw 0;let m=p?0xffffffff<<(32-p):0; m>>>=0;let net=n&m,bc=(net|(~m>>>0))>>>0,hosts=p>=31?2**(32-p):2**(32-p)-2;subout.innerHTML=`Network: <b>${ip(net)}/${p}</b><br>Mask: <b>${ip(m)}</b><br>Broadcast: <b>${ip(bc)}</b><br>Usable host: <b>${hosts}</b><br>Range: <b>${p>=31?ip(net):ip(net+1)} – ${p>=31?ip(bc):ip(bc-1)}</b>`}catch(e){subout.innerHTML='<span class="bad">Format CIDR tidak valid.</span>'}}
+function fo(){let total=(+km.value*+att.value)+(+cn.value*+cl.value)+(+sp.value*+sl.value)+(+mg.value);foout.innerHTML=`Fiber: <b>${(+km.value*+att.value).toFixed(2)} dB</b><br>Connector: <b>${(+cn.value*+cl.value).toFixed(2)} dB</b><br>Splice: <b>${(+sp.value*+sl.value).toFixed(2)} dB</b><br>Margin: <b>${(+mg.value).toFixed(2)} dB</b><hr>Total estimasi: <b>${total.toFixed(2)} dB</b>`}
+const ts={los:['Cek power ONT/ONU.','Cek indikator PON dan LOS.','Periksa patch cord/drop cable dan konektor.','Bersihkan konektor dengan prosedur yang benar.','Ukur optical power.','Jika fisik normal, cek provisioning/serial/LOID di OLT.'],pppoe:['Pastikan username/password.','Cek VLAN dari pelanggan ke BNG/BRAS.','Cek PPPoE server/AC.','Cek profile/service dan IP pool.','Periksa log autentikasi.'],slow:['Tes via LAN untuk memisahkan masalah Wi-Fi.','Cek interface errors/drops dan duplex.','Cek CPU/router dan utilisasi link.','Cek queue/profile bandwidth.','Bandingkan throughput dengan paket/SLA.'],ping:['Ping gateway lokal.','Bandingkan gateway vs upstream vs tujuan internet.','Uji packet loss.','Cek congestion/utilisasi.','Jika hanya tujuan tertentu, periksa routing.'],dhcp:['Cek link dan VLAN.','Cek DHCP server aktif.','Cek pool masih tersedia.','Cek bridge/firewall.','Uji IP statis untuk isolasi L2/L3.'],wifi:['Tes dengan LAN.','Cek channel/interferensi.','Cek band 2.4/5 GHz.','Cek jumlah client dan link rate.','Periksa posisi AP dan konfigurasi radio.']};
+function tr(){trout.innerHTML=ts[sym.value].map((x,i)=>`<div class="step"><b class="num">${i+1}</b><div>${x}</div></div>`).join('')}tr();
+
+const cmds=[['Interfaces','/interface print'],['IP address','/ip address print'],['Routes','/ip route print'],['ARP','/ip arp print'],['DHCP leases','/ip dhcp-server lease print'],['PPPoE active','/ppp active print'],['PPP secrets','/ppp secret print'],['Firewall','/ip firewall filter print'],['NAT','/ip firewall nat print'],['Resources','/system resource print'],['Logs','/log print'],['Ping','/ping 8.8.8.8'],['Torch','/tool torch interface=ether1'],['VLAN','/interface vlan print'],['Bridge ports','/interface bridge port print'],['Cable test','/interface ethernet cable-test ether1']];
+function renderCmd(){let q=search.value.toLowerCase();cmdsDiv=document.getElementById('cmds');cmdsDiv.innerHTML=cmds.filter(x=>x.join(' ').toLowerCase().includes(q)).map(x=>`<div style="margin:10px 0"><div class="muted small">${x[0]}</div><div class="cmd" onclick="navigator.clipboard?.writeText(this.textContent)">${x[1]}</div></div>`).join('')}renderCmd();
+
+async function send(){let text=q.value.trim();if(!text)return;let d=document.createElement('div');d.className='msg user';d.textContent=text;chat.appendChild(d);q.value='';chat.scrollTop=chat.scrollHeight;let a=document.createElement('div');a.className='msg ai';a.textContent='Menganalisis...';chat.appendChild(a);aiStatus.textContent='Menghubungi AI...';try{let r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});let data=await r.json();if(!r.ok)throw Error(data.error||'Request gagal');a.textContent=data.answer;aiStatus.innerHTML='<span class="good">AI aktif</span>'}catch(e){a.textContent='Gagal: '+e.message;aiStatus.innerHTML='<span class="bad">Backend/API belum siap atau akses ditolak.</span>'}chat.scrollTop=chat.scrollHeight}
+q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}})
+</script>
+</body></html>
